@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # SQLite Database (file-based, no separate container needed)
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quantipeak-backend
+    environment:
+      - DATABASE_URL=sqlite:///./quantipeak.db
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
+      - AZURE_OPENAI_DEPLOYMENT_NAME=${AZURE_OPENAI_DEPLOYMENT_NAME}
+    ports:
+      - "8000:8000"
+    # No database dependency needed for SQLite
+    volumes:
+      - ./backend:/app
+    networks:
+      - quantipeak-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quantipeak-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - quantipeak-network
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+
+# No volumes needed for SQLite
+
+networks:
+  quantipeak-network:
+    driver: bridge
