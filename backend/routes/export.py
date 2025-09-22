@@ -39,10 +39,12 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
                 name_para = doc.add_paragraph()
                 name_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 name_run = name_para.add_run(line)
-                name_run.font.size = Pt(14)
+                # 14px for resume, 12px for cover letter (matching popup)
+                name_font_size = 14 if 'resume' in filename.lower() else 12
+                name_run.font.size = Pt(name_font_size)
                 name_run.font.bold = True
                 name_run.font.name = 'Arial'
-                doc.add_paragraph()  # Add space after name
+                doc.add_paragraph()  # Add space after name (mb-3 equivalent)
             
             # Check if it's contact info
             elif ('@' in line or 'linkedin.com' in line.lower() or 
@@ -51,7 +53,7 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
                 contact_para = doc.add_paragraph()
                 contact_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 contact_run = contact_para.add_run(line)
-                contact_run.font.size = Pt(10)
+                contact_run.font.size = Pt(11)  # text-sm equivalent
                 contact_run.font.name = 'Arial'
                 doc.add_paragraph()  # Add space after contact
             
@@ -64,43 +66,76 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
                       'TECHNICAL SKILLS', 'PROFESSIONAL EXPERIENCE'
                   ])):
                 in_skills_section = 'SKILLS' in line
-                doc.add_paragraph()  # Add space before section
+                # Add margin-top: 6px before section
+                doc.add_paragraph()  # This adds the 6px margin-top
+                
                 section_para = doc.add_paragraph()
+                section_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 section_run = section_para.add_run(line)
-                section_run.font.size = Pt(10)
+                # 12px for resume, 12px for cover letter (matching popup)
+                section_font_size = 12 if 'resume' in filename.lower() else 12
+                section_run.font.size = Pt(section_font_size)
                 section_run.font.bold = True
                 section_run.font.name = 'Arial'
-                doc.add_paragraph()  # Add space after section header
+                
+                # Add line under heading (like in popup)
+                line_para = doc.add_paragraph()
+                line_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                line_run = line_para.add_run('_' * 50)  # Add line under heading
+                line_run.font.size = Pt(8)
+                line_run.font.name = 'Arial'
+                
+                # Add 6px gap after heading (increased by 2px)
+                doc.add_paragraph()  # This adds the 6px gap after heading
             
             # Check if it's a job title/company line
             elif '|' in line and len(line.split('|')) >= 2:
                 job_para = doc.add_paragraph()
+                job_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 job_run = job_para.add_run(line)
-                job_run.font.size = Pt(10)
+                # 10px for resume, 10px for cover letter
+                job_font_size = 10 if 'resume' in filename.lower() else 10
+                job_run.font.size = Pt(job_font_size)
                 job_run.font.bold = True
                 job_run.font.name = 'Arial'
+                # Add 6px gap after job title (increased by 2px)
+                doc.add_paragraph()  # This adds the 6px gap after job title
             
             # Check if it's a bullet point
             elif line.startswith('•') or line.startswith('-'):
                 bullet_para = doc.add_paragraph()
-                bullet_para.style = 'List Bullet'
-                bullet_run = bullet_para.add_run(line[1:].strip())  # Remove bullet character
-                bullet_run.font.size = Pt(9)
+                bullet_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                bullet_run = bullet_para.add_run(line)  # Keep bullet character
+                # 9px for resume, 10px for cover letter
+                bullet_font_size = 9 if 'resume' in filename.lower() else 10
+                bullet_run.font.size = Pt(bullet_font_size)
                 bullet_run.font.name = 'Arial'
+                # Add 6px gap after bullet point (increased by 2px)
+                doc.add_paragraph()  # This adds the 6px gap after bullet point
             
             # Check if it's in skills section
             elif in_skills_section and ':' in line:
                 skills_para = doc.add_paragraph()
+                skills_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 skills_run = skills_para.add_run(line)
-                skills_run.font.size = Pt(9)
+                # 9px for resume, 10px for cover letter
+                skills_font_size = 9 if 'resume' in filename.lower() else 10
+                skills_run.font.size = Pt(skills_font_size)
                 skills_run.font.name = 'Arial'
+                # Add 6px gap after skills line (increased by 2px)
+                doc.add_paragraph()  # This adds the 6px gap after skills line
             
             # Regular text
             else:
                 para = doc.add_paragraph()
+                para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 run = para.add_run(line)
-                run.font.size = Pt(9)
+                # 9px for resume, 10px for cover letter
+                normal_font_size = 9 if 'resume' in filename.lower() else 10
+                run.font.size = Pt(normal_font_size)
                 run.font.name = 'Arial'
+                # Add 6px gap after regular text (increased by 2px)
+                doc.add_paragraph()  # This adds the 6px gap after regular text
             
             i += 1
         
@@ -116,122 +151,207 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
             doc = SimpleDocTemplate(
                 pdf_io, 
                 pagesize=letter,
-                leftMargin=0.5*inch, 
-                rightMargin=0.5*inch,
-                topMargin=0.5*inch, 
-                bottomMargin=0.5*inch
+                leftMargin=0.75*inch, 
+                rightMargin=0.75*inch,
+                topMargin=0.75*inch, 
+                bottomMargin=0.75*inch
             )
             
-            # Create custom styles with better formatting
+            # Create custom styles with consistent, professional formatting
             styles = getSampleStyleSheet()
             
-            # Name style - smaller, bold, left aligned
+            # CONSISTENT FONT SIZE SYSTEM
+            # Name: 16px (largest, most prominent)
+            # Section Headers: 12px (clear hierarchy)
+            # Job Titles: 11px (important but not overwhelming)
+            # Contact Info: 10px (supporting information)
+            # Body Text: 10px (main content)
+            # Skills: 10px (consistent with body)
+            
+            # Name style - 16px for both resume and cover letter (consistent, prominent)
             name_style = ParagraphStyle(
                 'NameStyle',
                 parent=styles['Heading1'],
-                fontSize=14,
-                spaceAfter=10,
+                fontSize=16,
+                spaceAfter=8,
                 spaceBefore=0,
                 alignment=0,  # Left align
                 textColor=black,
                 fontName='Helvetica-Bold',
-                leading=16
+                leading=18
             )
             
-            # Contact style - smaller, left aligned
+            # Contact style - 10px (consistent with body text)
             contact_style = ParagraphStyle(
                 'ContactStyle',
                 parent=styles['Normal'],
-                fontSize=11,
-                spaceAfter=20,
+                fontSize=10,
+                spaceAfter=12,
                 spaceBefore=0,
                 alignment=0,  # Left align
                 fontName='Helvetica',
-                leading=13
+                leading=12
             )
             
-            # Section header style - smaller, bold, left aligned, perfect spacing
+            # Section header style - 12px (clear hierarchy, consistent)
             section_style = ParagraphStyle(
                 'SectionStyle',
                 parent=styles['Heading2'],
-                fontSize=10,
-                spaceAfter=8,
-                spaceBefore=14,
+                fontSize=12,
+                spaceAfter=4,
+                spaceBefore=20,
                 textColor=black,
                 fontName='Helvetica-Bold',
                 alignment=0,  # Left align
                 leftIndent=0,
                 rightIndent=0,
-                leading=12
+                leading=14
             )
             
-            # Job title/company style - bold, perfect spacing
+            # Job title/company style - 11px (important but not overwhelming)
             job_title_style = ParagraphStyle(
                 'JobTitleStyle',
                 parent=styles['Normal'],
                 fontSize=11,
-                spaceAfter=6,
+                spaceAfter=4,
                 spaceBefore=0,
                 fontName='Helvetica-Bold',
                 leftIndent=0,
                 rightIndent=0,
-                alignment=0,
-                leading=13
+                alignment=0,  # Left align
+                leading=13,
+                textColor=black
             )
             
-            # Normal text style - smaller, perfect spacing
+            # Normal text style - 10px (main content, consistent)
             normal_style = ParagraphStyle(
                 'NormalStyle',
                 parent=styles['Normal'],
-                fontSize=9,
-                spaceAfter=3,
+                fontSize=10,
+                spaceAfter=4,
                 spaceBefore=0,
                 fontName='Helvetica',
                 leftIndent=0,
                 rightIndent=0,
-                alignment=0,
-                leading=11
+                alignment=0,  # Left align
+                leading=12
             )
             
-            # Bullet point style with perfect indentation and spacing
+            # Bullet point style - 10px (consistent with body text)
             bullet_style = ParagraphStyle(
                 'BulletStyle',
                 parent=styles['Normal'],
-                fontSize=9,
-                spaceAfter=2,
+                fontSize=10,
+                spaceAfter=4,
                 spaceBefore=0,
                 fontName='Helvetica',
-                leftIndent=20,
+                leftIndent=18,
                 rightIndent=0,
-                alignment=0,
-                leading=11
+                alignment=0,  # Left align
+                leading=12
             )
             
-            # Skills style - no bullets, perfect spacing
+            # Skills style - 10px (consistent with body text)
             skills_style = ParagraphStyle(
                 'SkillsStyle',
                 parent=styles['Normal'],
-                fontSize=9,
-                spaceAfter=3,
+                fontSize=10,
+                spaceAfter=4,
                 spaceBefore=0,
                 fontName='Helvetica',
                 leftIndent=0,
                 rightIndent=0,
-                alignment=0,
-                leading=11
+                alignment=0,  # Left align
+                leading=12
             )
             
-            # Date style for cover letters - left aligned
+            # Date style for cover letters - 10px (consistent with body text)
             date_style = ParagraphStyle(
                 'DateStyle',
                 parent=styles['Normal'],
                 fontSize=10,
-                spaceAfter=15,
+                spaceAfter=12,
                 spaceBefore=0,
                 alignment=0,  # Left align
                 fontName='Helvetica',
                 textColor=black,
                 leading=12
+            )
+            
+            # Section-specific styles - ALL CONSISTENT AT 10px
+            # Professional Summary style
+            summary_style = ParagraphStyle(
+                'SummaryStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=4,
+                spaceBefore=0,
+                fontName='Helvetica',
+                leftIndent=0,
+                rightIndent=0,
+                alignment=0,
+                leading=12,
+                textColor=black
+            )
+            
+            # Work Experience style
+            experience_style = ParagraphStyle(
+                'ExperienceStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=4,
+                spaceBefore=0,
+                fontName='Helvetica',
+                leftIndent=0,
+                rightIndent=0,
+                alignment=0,
+                leading=12,
+                textColor=black
+            )
+            
+            # Education style
+            education_style = ParagraphStyle(
+                'EducationStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=4,
+                spaceBefore=0,
+                fontName='Helvetica',
+                leftIndent=0,
+                rightIndent=0,
+                alignment=0,
+                leading=12,
+                textColor=black
+            )
+            
+            # Projects style
+            projects_style = ParagraphStyle(
+                'ProjectsStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=4,
+                spaceBefore=0,
+                fontName='Helvetica',
+                leftIndent=0,
+                rightIndent=0,
+                alignment=0,
+                leading=12,
+                textColor=black
+            )
+            
+            # Certifications style
+            certifications_style = ParagraphStyle(
+                'CertificationsStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=4,
+                spaceBefore=0,
+                fontName='Helvetica',
+                leftIndent=0,
+                rightIndent=0,
+                alignment=0,
+                leading=12,
+                textColor=black
             )
             
             # Build content with improved formatting
@@ -239,6 +359,7 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
             lines = content.split('\n')
             i = 0
             in_skills_section = False
+            current_section = None
             
             while i < len(lines):
                 line = lines[i].strip()
@@ -249,14 +370,14 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
                 # Check if it's a name (first non-empty line, all caps, no special chars)
                 if i == 0 or (line.isupper() and len(line) > 3 and not any(char in line for char in ['|', '@', '.', ':', '•'])):
                     story.append(Paragraph(line, name_style))
-                    story.append(Spacer(1, 4))
+                    story.append(Spacer(1, 6))  # Slightly more space after name
                 
                 # Check if it's contact info (contains email, phone, or LinkedIn)
                 elif ('@' in line or 'linkedin.com' in line.lower() or 
                       (any(char.isdigit() for char in line) and len(line) > 10) or
                       'github.com' in line.lower()):
                     story.append(Paragraph(line, contact_style))
-                    story.append(Spacer(1, 8))
+                    story.append(Spacer(1, 8))  # More space after contact info
                 
                 # Check if it's a section header
                 elif (line.isupper() and len(line) > 3 and 
@@ -267,8 +388,34 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
                           'TECHNICAL SKILLS', 'PROFESSIONAL EXPERIENCE'
                       ])):
                     in_skills_section = 'SKILLS' in line
+                    
+                    # Set current section for styling
+                    if 'PROFESSIONAL SUMMARY' in line:
+                        current_section = 'summary'
+                    elif 'WORK EXPERIENCE' in line or 'PROFESSIONAL EXPERIENCE' in line:
+                        current_section = 'experience'
+                    elif 'EDUCATION' in line:
+                        current_section = 'education'
+                    elif 'PROJECTS' in line:
+                        current_section = 'projects'
+                    elif 'CERTIFICATIONS' in line:
+                        current_section = 'certifications'
+                    else:
+                        current_section = 'other'
+                    
                     story.append(Paragraph(line, section_style))
-                    story.append(Spacer(1, 6))
+                    # Add line under section header (matching popup)
+                    story.append(Paragraph('_' * 50, ParagraphStyle(
+                        'LineStyle',
+                        parent=styles['Normal'],
+                        fontSize=8,
+                        spaceAfter=4,  # Consistent 4px spacing
+                        spaceBefore=0,
+                        fontName='Helvetica',
+                        alignment=0,  # Left align
+                        textColor=black
+                    )))
+                    story.append(Spacer(1, 4))  # Consistent 4px spacing
                 
                 # Check if it's a date (for cover letters)
                 elif (len(line.split()) <= 3 and 
@@ -279,19 +426,35 @@ def create_download_file(content: str, filename: str, file_type: str) -> bytes:
                 # Check if it's a job title/company line (contains |)
                 elif '|' in line and len(line.split('|')) >= 2:
                     story.append(Paragraph(line, job_title_style))
-                    story.append(Spacer(1, 2))
+                    story.append(Spacer(1, 4))  # Consistent 4px spacing
                 
                 # Check if it's a bullet point
                 elif line.startswith('•') or line.startswith('-'):
                     story.append(Paragraph(line, bullet_style))
+                    story.append(Spacer(1, 4))  # Consistent 4px spacing
                 
                 # Check if it's in skills section (format differently)
                 elif in_skills_section and ':' in line:
                     story.append(Paragraph(line, skills_style))
+                    story.append(Spacer(1, 4))  # Consistent 4px spacing
                 
-                # Regular text
+                # Regular text with section-specific styling
                 else:
-                    story.append(Paragraph(line, normal_style))
+                    # Choose style based on current section
+                    if current_section == 'summary':
+                        story.append(Paragraph(line, summary_style))
+                    elif current_section == 'experience':
+                        story.append(Paragraph(line, experience_style))
+                    elif current_section == 'education':
+                        story.append(Paragraph(line, education_style))
+                    elif current_section == 'projects':
+                        story.append(Paragraph(line, projects_style))
+                    elif current_section == 'certifications':
+                        story.append(Paragraph(line, certifications_style))
+                    else:
+                        story.append(Paragraph(line, normal_style))
+                    
+                    story.append(Spacer(1, 4))  # Consistent 4px spacing
                 
                 i += 1
             
@@ -312,12 +475,20 @@ async def export_document(request: ExportRequest):
     """Export document in specified format"""
     
     try:
+        print(f"🔄 Backend received export request:")
+        print(f"📄 Filename: {request.filename}")
+        print(f"📋 Format: {request.format}")
+        print(f"📝 Content preview: {request.content[:200]}...")
+        print(f"📊 Content length: {len(request.content)}")
+        
         # Validate file format
         if request.format not in ["docx", "pdf"]:
             raise HTTPException(status_code=400, detail="Unsupported file format. Supported formats: docx, pdf")
         
         # Create file content
+        print(f"🚀 Creating {request.format.upper()} file...")
         file_content = create_download_file(request.content, request.filename, request.format)
+        print(f"✅ File created successfully, size: {len(file_content)} bytes")
         
         if not file_content:
             raise HTTPException(status_code=500, detail="Failed to create file content")

@@ -12,7 +12,7 @@ class ContactInfo(BaseModel):
 class Experience(BaseModel):
     title: str
     company: str
-    duration: str
+    duration: Optional[str] = None
     description: str
 
 class ResumeData(BaseModel):
@@ -66,7 +66,7 @@ class AIGenerationResponse(BaseModel):
 class ExportRequest(BaseModel):
     content: str
     filename: str
-    format: str  # txt, docx, pdf
+    format: str  # docx, pdf
 
 class CandidateCreate(BaseModel):
     name: str
